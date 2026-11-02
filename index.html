@@ -1,0 +1,1345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="A working demo of the AI Government Proposal Writer described at ajaia.ai: paste an RFP, get a compliance matrix, check it, and see what a pilot is worth.">
+<link rel="icon" href="data:,">
+<title>Bid Check</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<style>
+  /* Layout: a document-desk tool. Top bar, sticky step tabs, one panel per step on a cool gray desk.
+     Type: Source Serif 4 for headings and big numbers (the feel of a solicitation), Public Sans for UI
+     (the U.S. Web Design System face), IBM Plex Mono for requirement IDs and section numbers. */
+  :root {
+    --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --bg: #F4F6F9;
+    --surface: #FFFFFF;
+    --surface-2: #F7F9FB;
+    --surface-3: #EEF2F6;
+    --hover: #F2F5F9;
+    --row-hover: #F7FAFD;
+    --field: #FFFFFF;
+    --ink: #14202E;
+    --ink-2: #364556;
+    --muted: #5D6B7C;
+    --faint: #8A96A5;
+    --line: #DFE4EA;
+    --line-2: #C5CDD7;
+    --line-3: #93A0AF;
+    --track: #E7ECF1;
+    --accent: #005EA2;
+    --accent-hover: #1A4480;
+    --accent-text: #005EA2;
+    --accent-bg: #EAF3FA;
+    --accent-bg-2: #F3F8FC;
+    --accent-line: #B8D6EC;
+    --accent-ink: #12355C;
+    --on-accent: #FFFFFF;
+    --good: #157A3A;
+    --good-fill: #1E8E46;
+    --good-bg: #ECF7EF;
+    --good-line: #B7E0C3;
+    --good-ink: #124D27;
+    --warn: #9A5B00;
+    --warn-fill: #E5A000;
+    --warn-bg: #FFF6E5;
+    --warn-line: #F3D79B;
+    --warn-ink: #5C3A00;
+    --mark: #FCE38A;
+    --thumb: #FFFFFF;
+    --toast-bg: #14202E;
+    --toast-ink: #FFFFFF;
+    --scrim: rgba(20, 32, 46, 0.45);
+    --shadow-color: rgba(20, 32, 46, 0.07);
+    --focus-ring: rgba(0, 94, 162, 0.2);
+    --c-work-bg: #EEF2F6; --c-work-line: #DFE4EA; --c-work-ink: #364556;
+    --c-ins-bg: #EAF3FA; --c-ins-line: #B8D6EC; --c-ins-ink: #005EA2;
+    --c-eval-bg: #F3EFFB; --c-eval-line: #D9CDF2; --c-eval-ink: #5B3E9E;
+    --c-other-bg: #F7F9FB; --c-other-line: #DFE4EA; --c-other-ink: #5D6B7C;
+    --c-fmt-bg: #FFF2E8; --c-fmt-line: #F6CDAE; --c-fmt-ink: #A34A12;
+    --c-dl-bg: #FDEEEE; --c-dl-line: #F2C2C2; --c-dl-ink: #A82626;
+    --c-adv-bg: #F7F9FB; --c-adv-line: #C5CDD7; --c-adv-ink: #5D6B7C;
+
+    --radius: 8px;
+    --shadow: 0 1px 2px var(--shadow-color), 0 1px 1px var(--shadow-color);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0D141D; --surface: #141D28; --surface-2: #18222E; --surface-3: #1E2A38; --hover: #1A2532; --row-hover: #17212D; --field: #0F1721;
+      --ink: #E6EBF1; --ink-2: #C2CCD7; --muted: #8C99A8; --faint: #6C7988; --line: #253242; --line-2: #344457; --line-3: #4C5E73; --track: #253242;
+      --accent: #2378C3; --accent-hover: #1F6BAE; --accent-text: #7FB8EA; --accent-bg: rgba(35, 120, 195, 0.16); --accent-bg-2: #142638; --accent-line: rgba(127, 184, 234, 0.35); --accent-ink: #CFE4F7; --on-accent: #FFFFFF;
+      --good: #5FD08A; --good-fill: #2FA65E; --good-bg: rgba(47, 166, 94, 0.14); --good-line: rgba(95, 208, 138, 0.32); --good-ink: #C3EED3;
+      --warn: #F2C25B; --warn-fill: #E5A000; --warn-bg: rgba(229, 160, 0, 0.13); --warn-line: rgba(242, 194, 91, 0.32); --warn-ink: #F7DFA8;
+      --mark: rgba(252, 211, 77, 0.32); --thumb: #FFFFFF; --toast-bg: #E6EBF1; --toast-ink: #0D141D; --scrim: rgba(0, 0, 0, 0.6);
+      --shadow-color: rgba(0, 0, 0, 0.35); --focus-ring: rgba(127, 184, 234, 0.3);
+      --c-work-bg: #1E2A38; --c-work-line: #2C3B4D; --c-work-ink: #C2CCD7;
+      --c-ins-bg: rgba(35, 120, 195, 0.18); --c-ins-line: rgba(127, 184, 234, 0.35); --c-ins-ink: #9FCBF0;
+      --c-eval-bg: rgba(139, 108, 214, 0.18); --c-eval-line: rgba(178, 156, 235, 0.35); --c-eval-ink: #CDBDF4;
+      --c-other-bg: #18222E; --c-other-line: #2C3B4D; --c-other-ink: #A9B5C2;
+      --c-fmt-bg: rgba(226, 120, 50, 0.16); --c-fmt-line: rgba(240, 160, 110, 0.35); --c-fmt-ink: #F5B98E;
+      --c-dl-bg: rgba(220, 70, 70, 0.16); --c-dl-line: rgba(240, 130, 130, 0.35); --c-dl-ink: #F4A9A9;
+      --c-adv-bg: #18222E; --c-adv-line: #344457; --c-adv-ink: #A9B5C2;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0D141D; --surface: #141D28; --surface-2: #18222E; --surface-3: #1E2A38; --hover: #1A2532; --row-hover: #17212D; --field: #0F1721;
+    --ink: #E6EBF1; --ink-2: #C2CCD7; --muted: #8C99A8; --faint: #6C7988; --line: #253242; --line-2: #344457; --line-3: #4C5E73; --track: #253242;
+    --accent: #2378C3; --accent-hover: #1F6BAE; --accent-text: #7FB8EA; --accent-bg: rgba(35, 120, 195, 0.16); --accent-bg-2: #142638; --accent-line: rgba(127, 184, 234, 0.35); --accent-ink: #CFE4F7; --on-accent: #FFFFFF;
+    --good: #5FD08A; --good-fill: #2FA65E; --good-bg: rgba(47, 166, 94, 0.14); --good-line: rgba(95, 208, 138, 0.32); --good-ink: #C3EED3;
+    --warn: #F2C25B; --warn-fill: #E5A000; --warn-bg: rgba(229, 160, 0, 0.13); --warn-line: rgba(242, 194, 91, 0.32); --warn-ink: #F7DFA8;
+    --mark: rgba(252, 211, 77, 0.32); --thumb: #FFFFFF; --toast-bg: #E6EBF1; --toast-ink: #0D141D; --scrim: rgba(0, 0, 0, 0.6);
+    --shadow-color: rgba(0, 0, 0, 0.35); --focus-ring: rgba(127, 184, 234, 0.3);
+    --c-work-bg: #1E2A38; --c-work-line: #2C3B4D; --c-work-ink: #C2CCD7;
+    --c-ins-bg: rgba(35, 120, 195, 0.18); --c-ins-line: rgba(127, 184, 234, 0.35); --c-ins-ink: #9FCBF0;
+    --c-eval-bg: rgba(139, 108, 214, 0.18); --c-eval-line: rgba(178, 156, 235, 0.35); --c-eval-ink: #CDBDF4;
+    --c-other-bg: #18222E; --c-other-line: #2C3B4D; --c-other-ink: #A9B5C2;
+    --c-fmt-bg: rgba(226, 120, 50, 0.16); --c-fmt-line: rgba(240, 160, 110, 0.35); --c-fmt-ink: #F5B98E;
+    --c-dl-bg: rgba(220, 70, 70, 0.16); --c-dl-line: rgba(240, 130, 130, 0.35); --c-dl-ink: #F4A9A9;
+    --c-adv-bg: #18222E; --c-adv-line: #344457; --c-adv-ink: #A9B5C2;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+  h1, h2, h3, h4 { margin: 0; line-height: 1.25; text-wrap: balance; }
+  h2 { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: -0.005em; }
+  h3 { font-size: 15px; font-weight: 700; }
+  h4 { font-size: 13px; font-weight: 700; }
+  p { margin: 0; }
+  a { color: var(--accent-text); }
+  code { font-family: var(--font-mono); font-size: 12.5px; background: var(--surface-3); border: 1px solid var(--line); padding: 1px 5px; border-radius: 4px; color: var(--ink-2); }
+  .muted { color: var(--muted); }
+  .small { font-size: 12.5px; }
+  .wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: max(24px, env(safe-area-inset-left, 0px));
+    padding-right: max(24px, env(safe-area-inset-right, 0px));
+  }
+  :focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; border-radius: 4px; }
+
+  /* Top bar */
+  .top { background: var(--surface); border-bottom: 1px solid var(--line); }
+  .top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 10px 20px; min-height: 64px; flex-wrap: wrap; padding-block: 10px; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .brand .logo { width: 32px; height: 32px; border-radius: 7px; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; flex: none; }
+  .brand .name { font-family: var(--font-display); font-weight: 700; font-size: 19px; }
+  .brand .sub { color: var(--muted); font-size: 12.5px; }
+  .pill { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: var(--accent-bg); color: var(--accent-text); border: 1px solid var(--accent-line); border-radius: 999px; padding: 1px 8px; }
+  .privacy { color: var(--muted); font-size: 12.5px; display: flex; align-items: center; gap: 6px; }
+
+  /* Tabs */
+  .tabbar { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; }
+  .tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+  .tab { appearance: none; border: 0; background: none; font: inherit; color: var(--muted); padding: 13px 12px 11px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 8px; border-radius: 0; }
+  .tab:hover { color: var(--ink); }
+  .tab .n { width: 20px; height: 20px; border-radius: 50%; background: var(--surface-3); color: var(--ink-2); font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+  .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent-text); font-weight: 650; }
+  .tab[aria-selected="true"] .n { background: var(--accent); color: var(--on-accent); }
+  .tab .badge { font-size: 11px; font-weight: 700; color: var(--accent-text); background: var(--accent-bg); border: 1px solid var(--accent-line); border-radius: 999px; padding: 0 7px; font-variant-numeric: tabular-nums; }
+  .tab-select-wrap { display: none; padding-block: 10px; }
+
+  main { padding-block: 24px 40px; }
+  .panel-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; margin-bottom: 16px; }
+  .panel-head > div { min-width: 0; }
+  .panel-head p { margin-top: 4px; max-width: 760px; }
+  .head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); min-width: 0; }
+
+  /* Buttons */
+  .btn { font: inherit; font-weight: 600; font-size: 13.5px; border-radius: 6px; padding: 8px 14px; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; line-height: 1.3; }
+  .btn:hover { background: var(--hover); border-color: var(--line-3); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn.ghost { border-color: transparent; background: transparent; color: var(--ink-2); }
+  .btn.ghost:hover { background: var(--surface-3); }
+  .btn.block { width: 100%; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .spacer { flex: 1; }
+
+  /* Forms */
+  .form-stack { display: grid; gap: 14px; }
+  .fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 16px; }
+  .field { min-width: 0; }
+  .field label, .lbl { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; }
+  .field .opt { font-weight: 500; color: var(--muted); }
+  input, select, textarea { font: inherit; color: var(--ink); border: 1px solid var(--line-2); border-radius: 6px; padding: 8px 10px; background: var(--field); width: 100%; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-text); box-shadow: 0 0 0 3px var(--focus-ring); }
+  textarea { min-height: 330px; resize: vertical; font-size: 13px; line-height: 1.55; }
+  textarea.short { min-height: 260px; }
+  .hint { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+  .hint.warn { color: var(--warn); }
+  .adorn { display: flex; align-items: stretch; }
+  .adorn .pre, .adorn .post { display: grid; place-items: center; padding-inline: 10px; background: var(--surface-2); border: 1px solid var(--line-2); color: var(--muted); font-size: 13px; }
+  .adorn .pre { border-right: 0; border-radius: 6px 0 0 6px; }
+  .adorn .post { border-left: 0; border-radius: 0 6px 6px 0; }
+  .adorn input { border-radius: 0 6px 6px 0; }
+  .adorn.post-only input { border-radius: 6px 0 0 6px; }
+
+  .switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; color: var(--ink-2); font-size: 13.5px; }
+  .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .switch .track { width: 36px; height: 20px; border-radius: 999px; background: var(--line-2); position: relative; transition: background 0.15s; flex: none; }
+  .switch .thumb { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--thumb); box-shadow: 0 1px 2px var(--shadow-color); transition: transform 0.15s; }
+  .switch input:checked + .track { background: var(--accent); }
+  .switch input:checked + .track .thumb { transform: translateX(16px); }
+  .switch input:focus-visible + .track { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+
+  /* RFP tab */
+  .layout-rfp { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+  .side { display: grid; gap: 14px; }
+  .steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 12px; }
+  .steps li { position: relative; padding-left: 32px; color: var(--ink-2); font-size: 13.5px; }
+  .steps li::before { counter-increment: s; content: counter(s); position: absolute; left: 0; top: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-bg); color: var(--accent-text); font-weight: 700; font-size: 12px; display: grid; place-items: center; border: 1px solid var(--accent-line); }
+  .steps b { color: var(--ink); }
+  .note { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 12px; font-size: 12.5px; color: var(--ink-2); }
+  .sample-tag { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--c-fmt-ink); background: var(--c-fmt-bg); border: 1px solid var(--c-fmt-line); border-radius: 999px; padding: 0 7px; vertical-align: 1px; }
+
+  /* Banners */
+  .banner { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius); border: 1px solid var(--good-line); background: var(--good-bg); color: var(--good-ink); margin-bottom: 16px; font-size: 13.5px; }
+  .banner.info { border-color: var(--accent-line); background: var(--accent-bg); color: var(--accent-ink); }
+  .banner.warn { border-color: var(--warn-line); background: var(--warn-bg); color: var(--warn-ink); }
+  .banner .x { margin-left: auto; background: none; border: 0; color: inherit; font: inherit; font-weight: 600; cursor: pointer; padding: 0 4px; opacity: 0.85; white-space: nowrap; }
+  .banner svg { flex: none; margin-top: 2px; }
+  .banner a { color: inherit; font-weight: 600; }
+
+  /* Empty states */
+  .empty { text-align: center; padding: 48px 20px; }
+  .empty h3 { margin-bottom: 6px; }
+  .empty p { color: var(--muted); margin-bottom: 16px; }
+  .empty .actions { justify-content: center; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .stat { text-align: left; font: inherit; color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; background: var(--surface); cursor: pointer; box-shadow: var(--shadow); min-width: 0; }
+  .stat:hover { border-color: var(--line-3); }
+  .stat.on { border-color: var(--accent-text); box-shadow: 0 0 0 3px var(--focus-ring); }
+  .stat .v { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .stat .l { color: var(--muted); font-size: 12px; }
+
+  /* Filters */
+  .filters { display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) auto; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .showing { font-size: 12.5px; margin: 0 0 8px; }
+
+  /* Table */
+  .table-wrap { overflow: auto; max-height: 72vh; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 960px; font-size: 13px; }
+  thead th { position: sticky; top: 0; z-index: 2; background: var(--surface-2); text-align: left; font-weight: 700; color: var(--ink-2); padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover td { background: var(--row-hover); }
+  .mono { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
+  td.req { min-width: 280px; color: var(--ink); }
+  td select, td input { padding: 6px 8px; font-size: 12.5px; }
+  td.vol select { width: 158px; }
+  td.owner input { width: 112px; }
+  td.status select { width: 118px; }
+  .idbtn { font: inherit; font-family: var(--font-mono); font-size: 12.5px; color: var(--accent-text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-color: var(--accent-line); text-underline-offset: 3px; }
+  .heading-note { margin-top: 6px; font-size: 12px; color: var(--muted); background: var(--surface-2); border: 1px dashed var(--line-2); border-radius: 4px; padding: 4px 8px; display: inline-block; }
+  mark { background: var(--mark); color: inherit; font-weight: 700; padding: 0 2px; border-radius: 3px; }
+
+  .chip { display: inline-block; font-size: 11.5px; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid; white-space: nowrap; margin: 0 4px 4px 0; }
+  .t-work { background: var(--c-work-bg); border-color: var(--c-work-line); color: var(--c-work-ink); }
+  .t-instruction { background: var(--c-ins-bg); border-color: var(--c-ins-line); color: var(--c-ins-ink); }
+  .t-evaluation { background: var(--c-eval-bg); border-color: var(--c-eval-line); color: var(--c-eval-ink); }
+  .t-other { background: var(--c-other-bg); border-color: var(--c-other-line); color: var(--c-other-ink); }
+  .g-format { background: var(--c-fmt-bg); border-color: var(--c-fmt-line); color: var(--c-fmt-ink); }
+  .g-deadline { background: var(--c-dl-bg); border-color: var(--c-dl-line); color: var(--c-dl-ink); }
+  .g-advisory { background: var(--c-adv-bg); border-color: var(--c-adv-line); color: var(--c-adv-ink); }
+
+  /* Check tab */
+  .layout-check { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .result-empty { color: var(--muted); text-align: center; padding-block: 40px; }
+  .big { font-family: var(--font-display); font-size: 36px; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .big .pct { color: var(--muted); }
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; border-radius: 999px; padding: 3px 10px; border: 1px solid; }
+  .badge.good { background: var(--good-bg); border-color: var(--good-line); color: var(--good); }
+  .badge.warn { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn); }
+  .meter { position: relative; height: 10px; background: var(--track); border-radius: 999px; margin: 16px 0 6px; }
+  .meter > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--good-fill); }
+  .meter > i.warn { background: var(--warn-fill); }
+  .meter .tick { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); border-radius: 2px; }
+  .meter-legend { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .rlists { display: grid; gap: 18px; margin-top: 18px; }
+  .rlist h4 { margin-bottom: 8px; }
+  .rlist ul { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 6px; }
+  .rlist li { padding: 8px 10px; border-bottom: 1px solid var(--line); display: flex; gap: 10px; justify-content: space-between; align-items: baseline; font-size: 13px; min-width: 0; }
+  .rlist li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+  .rlist li:last-child { border-bottom: 0; }
+  .rlist li .meta { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .rlist.warn ul { border-color: var(--warn-line); background: var(--warn-bg); }
+  .rlist.warn li { border-color: var(--warn-line); color: var(--warn-ink); }
+  .rlist.warn li .meta { color: var(--warn-ink); opacity: 0.85; }
+  .rlist .none { color: var(--muted); font-size: 13px; padding: 8px 10px; border: 1px dashed var(--line-2); border-radius: 6px; }
+  details.rlist summary { cursor: pointer; font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+
+  /* Plan tab */
+  .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .vol-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .bar { height: 6px; background: var(--track); border-radius: 999px; overflow: hidden; margin: 10px 0 14px; }
+  .bar > i { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.2s; }
+  .starters { list-style: none; margin: 0; padding: 0; }
+  .starters li { display: grid; grid-template-columns: auto minmax(0, 1fr) 128px; gap: 10px; align-items: start; padding-block: 10px; border-top: 1px solid var(--line); }
+  .starters li:first-child { border-top: 0; padding-top: 0; }
+  .idchip { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); background: var(--surface-3); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+  .starter-lbl { display: block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); margin-bottom: 2px; }
+  .starters p { font-size: 13px; color: var(--ink); }
+  .starters select { padding: 5px 8px; font-size: 12.5px; }
+  .library { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+  .lib-item { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; background: var(--surface-2); }
+  .lib-item .t { font-weight: 700; font-size: 13px; }
+  .lib-item .d { font-size: 12.5px; color: var(--ink-2); }
+  .lib-item .m { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+  .lib-item .hit { font-size: 12px; color: var(--good); font-weight: 600; margin-top: 4px; }
+  .footnote { color: var(--muted); font-size: 12.5px; margin-top: 16px; max-width: 860px; }
+
+  /* Value tab */
+  .value-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
+  .vfields { display: grid; gap: 14px; margin-top: 14px; }
+  details.assump { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+  details.assump summary { cursor: pointer; font-weight: 700; font-size: 13.5px; }
+  #value-results { display: grid; gap: 16px; min-width: 0; }
+  .kpis { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  .kpi .l, .plan .l, .mini .l { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  .kpi .v { font-family: var(--font-display); font-size: 34px; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; margin-top: 2px; line-height: 1.15; }
+  .kpi .s { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .kpi.accent { border-color: var(--accent-line); background: linear-gradient(180deg, var(--accent-bg-2) 0%, var(--surface) 100%); }
+  .kpi.accent .v { color: var(--accent-text); }
+  .plan-line { font-size: 18px; margin: 4px 0 6px; }
+  .plan p, .mini p { color: var(--ink-2); font-size: 13.5px; }
+  .mini p { margin-top: 6px; }
+  .mini p b, .plan p b { color: var(--ink); }
+  .pilot { border-color: var(--accent-line); display: grid; gap: 12px; }
+  .pilot p { color: var(--ink-2); font-size: 13.5px; }
+
+  footer { border-top: 1px solid var(--line); background: var(--surface); }
+  footer .wrap { padding-block: 16px 20px; color: var(--muted); font-size: 12.5px; }
+
+  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px); background: var(--toast-bg); color: var(--toast-ink); font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 6px; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 50; box-shadow: 0 8px 24px var(--shadow-color); max-width: calc(100vw - 32px); }
+  .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .sheet { position: fixed; inset: 0; z-index: 60; background: var(--scrim); display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+  .sheet .card { width: min(640px, 100%); display: grid; gap: 12px; }
+  .sheet textarea { min-height: 200px; font-family: var(--font-mono); font-size: 12px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .layout-rfp, .value-grid { grid-template-columns: minmax(0, 1fr); }
+    .filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .filters input[type="search"] { grid-column: 1 / -1; }
+  }
+  @media (max-width: 767px) {
+    .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+    .tabs { display: none; }
+    .tab-select-wrap { display: block; }
+    .layout-check, .grid2, .kpis, .fields { grid-template-columns: minmax(0, 1fr); }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .starters li { grid-template-columns: auto minmax(0, 1fr); }
+    .starters li select { grid-column: 2; }
+    .big { font-size: 30px; }
+    .kpi .v { font-size: 30px; }
+    .privacy { width: 100%; }
+    main { padding-block: 16px 32px; }
+    .card { padding: 16px; }
+    h2 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<noscript><div class="wrap" style="padding-block:16px">Bid Check needs JavaScript to run.</div></noscript>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
+      </span>
+      <div style="min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="name">Bid Check</span><span class="pill">Demo</span></div>
+        <div class="sub">A working demo of Ajaia's AI Government Proposal Writer</div>
+      </div>
+    </div>
+    <div class="privacy">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      Sample data is fictional. What you paste stays in your browser.
+    </div>
+  </div>
+</header>
+
+<div class="tabbar">
+  <div class="wrap">
+    <div class="tabs" role="tablist" aria-label="Bid Check steps">
+      <button class="tab" role="tab" id="tab-rfp" data-tab="rfp" aria-selected="false" aria-controls="panel-rfp" type="button"><span class="n">1</span>RFP</button>
+      <button class="tab" role="tab" id="tab-matrix" data-tab="matrix" aria-selected="true" aria-controls="panel-matrix" type="button"><span class="n">2</span>Compliance matrix<span class="badge" id="badge-matrix" hidden></span></button>
+      <button class="tab" role="tab" id="tab-check" data-tab="check" aria-selected="false" aria-controls="panel-check" type="button"><span class="n">3</span>Check against my matrix<span class="badge" id="badge-check" hidden></span></button>
+      <button class="tab" role="tab" id="tab-plan" data-tab="plan" aria-selected="false" aria-controls="panel-plan" type="button"><span class="n">4</span>Draft plan</button>
+      <button class="tab" role="tab" id="tab-value" data-tab="value" aria-selected="false" aria-controls="panel-value" type="button"><span class="n">5</span>Hours and price</button>
+    </div>
+    <div class="tab-select-wrap">
+      <label class="lbl" for="tab-select">Step</label>
+      <select id="tab-select">
+        <option value="rfp">1. RFP</option>
+        <option value="matrix">2. Compliance matrix</option>
+        <option value="check">3. Check against my matrix</option>
+        <option value="plan">4. Draft plan</option>
+        <option value="value">5. Hours and price</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="wrap">
+
+    <!-- 1. RFP -->
+    <section class="panel" id="panel-rfp" role="tabpanel" aria-labelledby="tab-rfp" hidden>
+      <div class="layout-rfp">
+        <div class="card form-stack">
+          <div>
+            <h2>Start with the RFP</h2>
+            <p class="muted" style="margin-top:4px">Paste the solicitation text. Sections C, L and M work best. You can also load a fictional sample.</p>
+          </div>
+          <div class="fields">
+            <div class="field"><label for="f-company">Company name <span class="opt">(optional)</span></label><input id="f-company" placeholder="Your company" autocomplete="off"></div>
+            <div class="field"><label for="f-agency">Agency</label><input id="f-agency" autocomplete="off"></div>
+            <div class="field"><label for="f-title">RFP title</label><input id="f-title" autocomplete="off"></div>
+            <div class="field"><label for="f-due">Due date</label><input id="f-due" placeholder="March 15, 2027" autocomplete="off"></div>
+          </div>
+          <div class="field">
+            <label for="f-rfp">RFP text<span class="sample-tag" id="sample-tag" hidden>Fictional sample</span></label>
+            <textarea id="f-rfp" placeholder="Paste RFP text here" spellcheck="false"></textarea>
+            <div class="hint" id="rfp-count">No text yet</div>
+          </div>
+          <div>
+            <label class="switch"><input type="checkbox" id="f-advisory"><span class="track"><span class="thumb"></span></span><span>Include advisory language (should, encouraged)</span></label>
+          </div>
+          <div class="actions">
+            <button class="btn" id="btn-sample" type="button">Load sample RFP</button>
+            <button class="btn ghost" id="btn-clear" type="button">Clear</button>
+            <span class="spacer"></span>
+            <button class="btn primary" id="btn-build" type="button" disabled>Build compliance matrix</button>
+          </div>
+        </div>
+        <aside class="card side">
+          <h3>What you get</h3>
+          <ol class="steps">
+            <li><b>Every requirement, in seconds.</b> Each "shall", "must", page limit and deadline, tagged and mapped to a proposal volume.</li>
+            <li><b>A matrix your team can work in.</b> Assign owners and status, then export it to Excel.</li>
+            <li><b>A check against your own matrix.</b> See what the tool caught and what it missed.</li>
+            <li><b>What a pilot is worth.</b> In your hours and your dollars.</li>
+          </ol>
+          <div class="note"><b>How this demo works.</b> It finds requirements with fixed language rules, right in your browser. Ajaia's product drafts the proposal with AI. This demo shows the matrix and the economics around it.</div>
+          <button class="btn block js-sample-build" type="button">Run it on the sample RFP</button>
+        </aside>
+      </div>
+    </section>
+
+    <!-- 2. Matrix -->
+    <section class="panel" id="panel-matrix" role="tabpanel" aria-labelledby="tab-matrix">
+      <div class="panel-head">
+        <div>
+          <h2>Compliance matrix</h2>
+          <p class="muted" id="matrix-meta"></p>
+        </div>
+        <div class="head-actions" id="matrix-actions">
+          <button class="btn" id="btn-copy-table" type="button">Copy table</button>
+          <button class="btn primary" id="btn-csv" type="button">Export CSV</button>
+        </div>
+      </div>
+      <div id="matrix-banner"></div>
+      <div id="matrix-empty"></div>
+      <div id="matrix-body">
+        <div class="stats" id="matrix-stats"></div>
+        <div class="filters">
+          <input type="search" id="flt-q" placeholder="Search requirements" aria-label="Search requirements">
+          <select id="flt-type" aria-label="Filter by type"></select>
+          <select id="flt-volume" aria-label="Filter by volume"></select>
+          <select id="flt-status" aria-label="Filter by status"></select>
+          <button class="btn ghost" id="flt-clear" type="button">Clear filters</button>
+        </div>
+        <p class="muted showing" id="flt-showing"></p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Section</th><th>Requirement</th><th>Type</th><th>Tags</th><th>Volume</th><th>Owner</th><th>Status</th></tr>
+            </thead>
+            <tbody id="matrix-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Check -->
+    <section class="panel" id="panel-check" role="tabpanel" aria-labelledby="tab-check" hidden>
+      <div class="panel-head">
+        <div>
+          <h2>Check against your own matrix</h2>
+          <p class="muted">This is how we test the product's main claim before any customer sees it. Paste a matrix your team built by hand, one requirement per line, starting with its section, like <code>L.3: technical volume not to exceed 25 pages</code></p>
+        </div>
+      </div>
+      <div id="check-empty"></div>
+      <div class="layout-check" id="check-body">
+        <div class="card form-stack">
+          <div class="field">
+            <label for="f-hand">Your matrix</label>
+            <textarea id="f-hand" class="short" placeholder="C.2: provide Tier 1 and Tier 2 help desk support" spellcheck="false"></textarea>
+          </div>
+          <div class="actions">
+            <button class="btn" id="btn-hand-sample" type="button">Load sample hand matrix</button>
+            <span class="spacer"></span>
+            <button class="btn primary" id="btn-check" type="button" disabled>Check</button>
+          </div>
+          <p class="hint" style="margin-top:0">A line counts as caught when at least half of its words with four or more letters appear in a requirement from the same section.</p>
+        </div>
+        <div class="card" id="check-result"><div class="result-empty">Paste your matrix, or load the sample, then press Check.</div></div>
+      </div>
+    </section>
+
+    <!-- 4. Plan -->
+    <section class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan" hidden>
+      <div class="panel-head">
+        <div>
+          <h2>Draft plan</h2>
+          <p class="muted" id="plan-meta"></p>
+        </div>
+      </div>
+      <div id="plan-empty"></div>
+      <div id="plan-body">
+        <div class="banner info">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+          <span>In the product, Ajaia drafts each section from your past proposals. Ajaia says the draft is typically 70% finished. This demo shows the plan behind that draft: which requirements each volume has to answer, with a compliance starter for each.</span>
+        </div>
+        <div class="grid2" id="plan-cards"></div>
+        <p class="footnote">Starters mirror the requirement so nothing gets missed. They aren't the answer. The sample RFP itself says proposals that only restate the requirements are rated unacceptable.</p>
+      </div>
+    </section>
+
+    <!-- 5. Value -->
+    <section class="panel" id="panel-value" role="tabpanel" aria-labelledby="tab-value" hidden>
+      <div class="panel-head">
+        <div>
+          <h2>What the pilot is worth</h2>
+          <p class="muted">Change any number. Everything updates as you type.</p>
+        </div>
+      </div>
+      <div class="value-grid">
+        <div class="card">
+          <h3>Your bids</h3>
+          <div class="vfields">
+            <div class="field"><label for="v-bids">RFPs you bid per month</label><input id="v-bids" type="number" min="0" step="1" inputmode="numeric"></div>
+            <div class="field"><label for="v-hours">Hours per bid</label><div class="adorn post-only"><input id="v-hours" type="number" min="0" step="1" inputmode="numeric"><span class="post">hours</span></div></div>
+            <div class="field"><label for="v-share">Share of those hours spent drafting and on compliance</label><div class="adorn post-only"><input id="v-share" type="number" min="0" max="100" step="1" inputmode="numeric"><span class="post">%</span></div></div>
+            <div class="field"><label for="v-removed">Hours the tool removes per bid</label><div class="adorn post-only"><input id="v-removed" type="number" min="0" step="0.5" inputmode="decimal"><span class="post">hours</span></div><div class="hint" id="v-removed-hint"></div></div>
+            <div class="field"><label for="v-cost">Loaded hourly cost of a writer</label><div class="adorn"><span class="pre">$</span><input id="v-cost" type="number" min="0" step="1" inputmode="numeric"></div><div class="hint">$78,801 average salary / 2,080 hours, plus 30% for benefits.</div></div>
+            <div class="field"><label for="v-passed">RFPs you passed on last quarter</label><input id="v-passed" type="number" min="0" step="1" inputmode="numeric"></div>
+          </div>
+          <details class="assump">
+            <summary>Assumptions for the upside</summary>
+            <div class="vfields">
+              <div class="field"><label for="v-win">Win rate</label><div class="adorn post-only"><input id="v-win" type="number" min="0" max="100" step="1" inputmode="numeric"><span class="post">%</span></div></div>
+              <div class="field"><label for="v-award">Average award</label><div class="adorn"><span class="pre">$</span><input id="v-award" type="number" min="0" step="10000" inputmode="numeric"></div></div>
+              <div class="field"><label for="v-margin">Margin</label><div class="adorn post-only"><input id="v-margin" type="number" min="0" max="100" step="1" inputmode="numeric"><span class="post">%</span></div></div>
+            </div>
+          </details>
+        </div>
+        <div id="value-results"></div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    Demo of the AI Government Proposal Writer described at <a href="https://ajaia.ai/ai-powered-solutions/product-page/ai-government-contract-proposal-writing-platform" target="_blank" rel="noopener">ajaia.ai</a>. Built for an Ajaia EIR assessment. Not an official Ajaia page. Sample data is fictional.
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="sheet" id="copy-sheet" role="dialog" aria-modal="true" aria-labelledby="copy-sheet-title" hidden>
+  <div class="card">
+    <h3 id="copy-sheet-title">Copy it from here</h3>
+    <p class="muted small" id="copy-sheet-help">This view blocked automatic copying. The text below is selected: press Ctrl+C (Cmd+C on a Mac), then close.</p>
+    <textarea id="copy-sheet-text" readonly spellcheck="false" aria-label="Text to copy"></textarea>
+    <div class="actions"><span class="spacer"></span><button class="btn primary" id="copy-sheet-close" type="button">Close</button></div>
+  </div>
+</div>
+
+<script id="bid-logic">
+// Bid Check logic: runs entirely in the browser. No network calls.
+const BidLogic = (() => {
+  const VOLUMES = ['Vol I Technical', 'Vol II Past Performance', 'Vol III Price', 'Admin', 'All volumes'];
+  const ABBREVIATIONS = ['a.m.', 'p.m.', 'e.g.', 'i.e.', 'U.S.', 'No.', 'Inc.', 'Co.', 'Ltd.', 'etc.', 'vs.', 'approx.'];
+  const OBLIGATION = /\b(shall|must|is required to|are required to|will be required|will not be considered|not exceed|no more than|no smaller than|no later than|are due|is due|font|margins)\b/i;
+  const ADVISORY = /\b(should|is encouraged|are encouraged)\b/i;
+  const FORMAT_WORDS = /\b(pages?|font|margins?|pdf|\d+-point|format|files?)\b/i;
+  const DEADLINE_WORDS = /\b(due|no later than|deadline)\b/i;
+  const SECTION_LINE = /^\s*SECTION\s+([A-M])\b\s*[-:.]?\s*(.*)$/i;
+  const HEADING_LINE = /^\s*([A-M])\.(\d+(?:\.\d+)*)\s+(\S.*)$/;
+  const BULLET_LINE = /^\s*(?:[-*•]|\(?[a-z0-9]{1,3}\))\s+/i;
+
+  function protect(text) {
+    let s = text;
+    for (const a of ABBREVIATIONS) s = s.split(a).join(a.replace(/\./g, '\u0001'));
+    return s;
+  }
+
+  function splitSentences(paragraph) {
+    return protect(paragraph)
+      .split(/(?<=[.;?!])\s+(?=[A-Z(])/)
+      .map((s) => s.replace(/\u0001/g, '.').trim())
+      .filter(Boolean);
+  }
+
+  function typeFor(letter) {
+    if (letter === 'C') return 'Work requirement';
+    if (letter === 'L') return 'Instruction';
+    if (letter === 'M') return 'Evaluation';
+    return 'Other';
+  }
+
+  function volumeFor(heading, sentence) {
+    if (/basis for award/i.test(heading)) return 'All volumes';
+    if (/\b(price|cost)\b/i.test(heading)) return 'Vol III Price';
+    if (/past performance/i.test(heading)) return 'Vol II Past Performance';
+    if (/\btechnical\b|\bvolume i\b/i.test(heading)) return 'Vol I Technical';
+    if (/\b(general|format|submission|instructions)\b/i.test(heading)) return 'Admin';
+    if (/\b(price|cost|clins?|labor rates?)\b/i.test(sentence)) return 'Vol III Price';
+    if (/past performance|\breferences?\b/i.test(sentence)) return 'Vol II Past Performance';
+    if (DEADLINE_WORDS.test(sentence) || FORMAT_WORDS.test(sentence)) return 'Admin';
+    return 'Vol I Technical';
+  }
+
+  function extractRequirements(text, includeAdvisory = false) {
+    const reqs = [];
+    const lines = String(text || '').replace(/\r/g, '').split('\n');
+    // Text with no section headings at all is read as one "Other" section.
+    const hasSections = lines.some((l) => SECTION_LINE.test(l.trim()) || HEADING_LINE.test(l.trim()));
+    let letter = hasSections ? null : 'X';
+    let section = '';
+    let heading = '';
+    let buffer = [];
+
+    const flush = () => {
+      if (!buffer.length) return;
+      const paragraph = buffer.join(' ').replace(/\s+/g, ' ').trim();
+      buffer = [];
+      if (!letter) return; // ignore cover text before the first section
+      for (const sentence of splitSentences(paragraph)) {
+        const ob = sentence.match(OBLIGATION);
+        const adv = ob ? null : sentence.match(ADVISORY);
+        const isEvaluation = letter === 'M'; // every sentence in Section M counts
+        if (!ob && !isEvaluation && !(includeAdvisory && adv)) continue;
+        const tags = [];
+        if (FORMAT_WORDS.test(sentence)) tags.push('Format');
+        if (DEADLINE_WORDS.test(sentence)) tags.push('Deadline');
+        if (!ob && adv) tags.push('Advisory');
+        reqs.push({
+          id: 'R-' + String(reqs.length + 1).padStart(3, '0'),
+          section,
+          heading,
+          text: sentence,
+          trigger: ob ? ob[0] : adv ? adv[0] : null,
+          type: typeFor(letter),
+          tags,
+          volume: volumeFor(heading, sentence),
+          owner: '',
+          status: 'Not started',
+        });
+      }
+    };
+
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) { flush(); continue; }
+      let m = line.match(SECTION_LINE);
+      if (m) { flush(); letter = m[1].toUpperCase(); section = letter; heading = m[2] || ''; continue; }
+      m = line.match(HEADING_LINE);
+      if (m) {
+        flush();
+        letter = m[1];
+        section = m[1] + '.' + m[2];
+        heading = m[3];
+        if (/[.;]$/.test(heading) || OBLIGATION.test(heading)) {
+          buffer.push(heading);
+          heading = heading.split(/\s+/).slice(0, 6).join(' ');
+        }
+        continue;
+      }
+      if (BULLET_LINE.test(line)) { flush(); buffer.push(line.replace(BULLET_LINE, '')); flush(); continue; }
+      buffer.push(line);
+    }
+    flush();
+    return reqs;
+  }
+
+  const significantWords = (s) => (String(s).toLowerCase().match(/[a-z0-9]+/g) || []).filter((w) => w.length >= 4);
+
+  function checkAgainstMatrix(handText, reqs) {
+    const lines = String(handText || '').split('\n').map((l) => l.trim()).filter(Boolean);
+    const results = lines.map((line) => {
+      const m = line.match(/^([A-M](?:\.\d+)*)\s*[:|-]\s*(.+)$/i);
+      const section = m ? m[1].toUpperCase() : null;
+      const words = [...new Set(significantWords(m ? m[2] : line))];
+      let best = null;
+      let bestScore = 0;
+      for (const r of reqs) {
+        const rs = r.section.toUpperCase();
+        if (section && rs !== section && !rs.startsWith(section + '.')) continue;
+        const rw = new Set(significantWords(r.text));
+        const score = words.length ? words.filter((w) => rw.has(w)).length / words.length : 0;
+        if (score > bestScore) { bestScore = score; best = r; }
+      }
+      return { line, section, matchId: bestScore >= 0.5 && best ? best.id : null, score: bestScore };
+    });
+    const caught = results.filter((r) => r.matchId).length;
+    const matchedIds = new Set(results.map((r) => r.matchId).filter(Boolean));
+    return {
+      results,
+      caught,
+      total: results.length,
+      recall: results.length ? caught / results.length : 0,
+      missed: results.filter((r) => !r.matchId),
+      extras: reqs.filter((r) => !matchedIds.has(r.id)),
+    };
+  }
+
+  // A compliance starter mirrors the requirement so nothing is missed. It is not the draft.
+  function starterSentence(r, company = '[Company]') {
+    const t = r.text
+      .replace(/^(the\s+)?(contractor|offerors?)\s+(shall|must)\s+not\s+/i, company + ' will not ')
+      .replace(/^(the\s+)?(contractor|offerors?)\s+(shall|must)\s+/i, company + ' will ');
+    return t === r.text ? 'Show how ' + company + ' meets this: ' + r.text : t;
+  }
+
+  // Hours and price. Defaults match Task 2.4 of the plan.
+  const DEFAULT_INPUTS = { bidsPerMonth: 4, hoursPerBid: 40, draftingShare: 0.6, hoursRemovedPerBid: 15, hourlyCost: 50, passedLastQuarter: 3, winRate: 0.2, avgAward: 500000, margin: 0.1 };
+  const PILOT = { days: 45, discount: 0.5, guaranteeShare: 0.25, lockMonths: 24 };
+
+  function computeValue(i) {
+    const draftingHours = i.hoursPerBid * i.draftingShare;
+    const pageClaimCeiling = draftingHours * 0.7; // Ajaia's page: a draft that's typically 70% finished
+    const hoursRemoved = Math.min(i.hoursRemovedPerBid, draftingHours);
+    const hoursSavedPerMonth = i.bidsPerMonth * hoursRemoved;
+    const valuePerMonth = hoursSavedPerMonth * i.hourlyCost;
+    const plan = i.bidsPerMonth <= 6 ? { name: 'Team', price: 1000, cap: 6 }
+      : i.bidsPerMonth <= 12 ? { name: 'Growth', price: 2000, cap: 12 }
+      : { name: 'Custom', price: null, cap: null };
+    const priceShare = plan.price !== null && valuePerMonth > 0 ? plan.price / valuePerMonth : null;
+    const buyerKeeps = plan.price !== null ? valuePerMonth - plan.price : null;
+    const extraBidsPerMonth = i.hoursPerBid > 0 ? hoursSavedPerMonth / i.hoursPerBid : 0;
+    const profitPerBid = i.avgAward * i.winRate * i.margin;
+    return {
+      draftingHours, pageClaimCeiling, hoursRemoved, hoursSavedPerMonth, valuePerMonth, plan, priceShare, buyerKeeps,
+      extraBidsPerMonth, profitPerBid, upsidePerMonth: extraBidsPerMonth * profitPerBid, noBidCostLastQuarter: i.passedLastQuarter * profitPerBid,
+    };
+  }
+
+  function toCsv(reqs) {
+    const esc = (v) => '"' + String(v).replace(/"/g, '""') + '"';
+    const header = ['ID', 'Section', 'Heading', 'Requirement', 'Type', 'Tags', 'Volume', 'Owner', 'Status'];
+    const rows = reqs.map((r) => [r.id, r.section, r.heading, r.text, r.type, r.tags.join('; '), r.volume, r.owner, r.status].map(esc).join(','));
+    return [header.map(esc).join(','), ...rows].join('\n');
+  }
+
+  return { VOLUMES, extractRequirements, checkAgainstMatrix, starterSentence, DEFAULT_INPUTS, PILOT, computeValue, toCsv };
+})();
+if (typeof module !== 'undefined' && module.exports) module.exports = BidLogic;
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const L = BidLogic;
+  const SAMPLE_RFP = "FICTIONAL SAMPLE SOLICITATION FOR DEMO PURPOSES ONLY\nSolicitation No. SAMPLE-27-0001\nFederal Agency for Digital Services (fictional)\nTitle: Help Desk and Cloud Operations Support\n\nSECTION C - STATEMENT OF WORK\n\nC.1 Background\nThe Agency operates a hybrid environment of 2,400 users across four regional offices. This section describes the work.\n\nC.2 Scope\nThe Contractor shall provide Tier 1 and Tier 2 help desk support from 7:00 a.m. to 7:00 p.m. Eastern Time, Monday through Friday. The Contractor shall resolve 80 percent of Tier 1 tickets within four business hours. The Contractor must maintain a knowledge base of resolved issues and update it at least monthly.\n\nC.3 Cloud Operations\nThe Contractor shall monitor the Agency's cloud workloads and report incidents to the COR within 30 minutes of detection. The Contractor shall perform monthly patching in an approved maintenance window. All deliverables must comply with Section 508 accessibility standards.\n\nC.4 Key Personnel\nThe Contractor shall designate a Program Manager and a Cloud Lead as key personnel. Key personnel shall not be replaced without prior written approval from the Contracting Officer.\n\nSECTION L - INSTRUCTIONS TO OFFERORS\n\nL.1 General\nProposals are due no later than 2:00 p.m. Eastern Time on March 15, 2027. Offerors shall submit proposals electronically as searchable PDF files. Late proposals will not be considered.\n\nL.2 Format\nEach page shall be 8.5 x 11 inches with one-inch margins. Text shall be no smaller than 12-point Times New Roman. Tables may use 10-point font.\n\nL.3 Volume I, Technical\nThe Technical Volume shall not exceed 25 pages. The Offeror shall describe its approach to each task in Section C. The Offeror must include a staffing plan and resumes for all key personnel. Resumes shall not exceed two pages each and do not count toward the page limit. A one-page staffing matrix is also required as an appendix.\n\nL.4 Volume II, Past Performance\nThe Offeror shall provide three past performance references for contracts performed within the last five years. Each reference must include the contract number, agency, period of performance, and a point of contact. Offerors should describe how each contract is relevant to this requirement.\n\nL.5 Volume III, Price\nThe Offeror shall complete the pricing workbook in Attachment J-2 for all CLINs. Labor rates must be fully burdened.\n\nSECTION M - EVALUATION FACTORS\n\nM.1 Basis for Award\nAward will be made to the offeror whose proposal represents the best value to the Government. Technical and past performance, when combined, are significantly more important than price.\n\nM.2 Technical Approach\nThe Government will evaluate the Offeror's understanding of the requirements and the feasibility of its approach. Proposals that merely restate the requirements will be rated unacceptable.\n\nM.3 Past Performance\nThe Government will assess the relevance and quality of each reference.\n\nM.4 Price\nPrice will be evaluated for reasonableness and completeness.\n";
+  const SAMPLE_HAND = "C.2: provide Tier 1 and Tier 2 help desk support\nC.2: resolve 80 percent of Tier 1 tickets within four business hours\nC.2: maintain knowledge base of resolved issues, update monthly\nC.3: monitor cloud workloads, report incidents within 30 minutes\nC.3: monthly patching in approved maintenance window\nC.3: deliverables comply with Section 508 accessibility standards\nC.4: designate Program Manager and Cloud Lead as key personnel\nC.4: key personnel not replaced without written approval from Contracting Officer\nL.1: proposals due no later than March 15, 2027\nL.1: submit proposals electronically as searchable PDF files\nL.1: late proposals will not be considered\nL.2: page 8.5 x 11 inches, one-inch margins\nL.2: text no smaller than 12-point Times New Roman\nL.2: tables may use 10-point font\nL.3: technical volume not to exceed 25 pages\nL.3: describe approach to each task in Section C\nL.3: include staffing plan and resumes for all key personnel\nL.3: resumes not to exceed two pages, not counted in page limit\nL.3: one-page staffing matrix required as an appendix\nL.4: three past performance references within last five years\nL.4: each reference to include contract number, agency, period of performance, point of contact\nL.5: complete pricing workbook Attachment J-2 for all CLINs\nL.5: labor rates fully burdened\nM.1: award on best value to the Government\nM.1: technical and past performance combined more important than price\nM.2: evaluate understanding of requirements and feasibility of approach\nM.2: restating requirements rated unacceptable\nM.3: assess relevance and quality of each reference\nM.4: price evaluated for reasonableness and completeness\n";
+  const SAMPLE_META = { agency: 'Federal Agency for Digital Services (fictional)', title: 'Help Desk and Cloud Operations Support', due: 'March 15, 2027' };
+  const LIBRARY = [
+    { title: 'Service desk modernization', body: 'Tier 1 and Tier 2 support for 1,800 users.', meta: 'Fictional Agency A, 2023 to 2026, SAMPLE-PP-001', tags: ['help desk', 'tier 1', 'tickets', 'knowledge base'] },
+    { title: 'Hybrid cloud operations', body: 'Monitoring, incident response and monthly patching.', meta: 'Fictional Agency B, 2022 to 2025, SAMPLE-PP-002', tags: ['cloud', 'monitoring', 'patching', 'incidents'] },
+    { title: 'Accessibility remediation', body: 'Section 508 fixes across 40 web apps.', meta: 'Fictional Agency C, 2021 to 2024, SAMPLE-PP-003', tags: ['508', 'accessibility', 'deliverables', 'web'] },
+  ];
+  const TYPES = ['Work requirement', 'Instruction', 'Evaluation', 'Other'];
+  const STATUSES = ['Not started', 'Drafting', 'Done'];
+  const TYPE_CLASS = { 'Work requirement': 't-work', Instruction: 't-instruction', Evaluation: 't-evaluation', Other: 't-other' };
+  const TAG_CLASS = { Format: 'g-format', Deadline: 'g-deadline', Advisory: 'g-advisory' };
+  const EMPTY_FILTERS = { q: '', type: '', volume: '', status: '', tag: '' };
+  const TAB_IDS = ['rfp', 'matrix', 'check', 'plan', 'value'];
+
+  const state = {
+    tab: 'matrix',
+    company: '', agency: '', title: '', due: '', rfpText: '', includeAdvisory: false,
+    reqs: [], builtMs: null, banner: null, builtWithAdvisory: false,
+    filters: { ...EMPTY_FILTERS },
+    handText: '', check: null,
+    inputs: { bids: 4, hours: 40, share: 60, removed: 15, cost: 50, passed: 3, win: 20, award: 500000, margin: 10 },
+  };
+
+  // Saving files: inside the claude.ai viewer this goes through the downloads capability;
+  // opened as a plain file, it falls back to a normal browser download.
+  const inViewer = !!(window.claude && typeof window.claude.use === 'function');
+  const downloadsReady = inViewer ? Promise.resolve(window.claude.use('downloads')).catch(() => null) : Promise.resolve(undefined);
+
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const money = (n) => (n < 0 ? '-$' : '$') + Math.round(Math.abs(n)).toLocaleString('en-US');
+  const num = (n, d = 0) => Number(n).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: 0 });
+  const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+  const icons = {
+    check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+    alert: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
+    info: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>',
+  };
+
+  // ---------- helpers ----------
+  let toastTimer = null;
+  function toast(msg) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('on'), 2200);
+  }
+
+  let sheetReturnFocus = null;
+  function showCopySheet(text) {
+    sheetReturnFocus = document.activeElement;
+    const sheet = $('#copy-sheet');
+    const ta = $('#copy-sheet-text');
+    ta.value = text;
+    sheet.hidden = false;
+    ta.focus();
+    ta.select();
+  }
+  function closeCopySheet() {
+    $('#copy-sheet').hidden = true;
+    if (sheetReturnFocus && sheetReturnFocus.focus) sheetReturnFocus.focus();
+  }
+
+  // Call straight from a click handler, so the browser treats it as the viewer's own action.
+  function copyText(text, okMessage) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => toast(okMessage), () => showCopySheet(text));
+        return;
+      }
+    } catch (e) { /* fall through to the sheet */ }
+    showCopySheet(text);
+  }
+
+  function browserDownload(name, text, type) {
+    const blob = new Blob([text], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  const slug = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'rfp';
+
+  function highlight(text, trigger) {
+    if (!trigger) return esc(text);
+    const i = text.toLowerCase().indexOf(trigger.toLowerCase());
+    if (i < 0) return esc(text);
+    return esc(text.slice(0, i)) + '<mark>' + esc(text.slice(i, i + trigger.length)) + '</mark>' + esc(text.slice(i + trigger.length));
+  }
+
+  function rfpMeta() {
+    const parts = [state.title || 'Untitled RFP'];
+    if (state.agency) parts.push(state.agency);
+    if (state.due) parts.push('due ' + state.due);
+    return parts.join(', ');
+  }
+
+  function emptyState(title, body) {
+    return '<div class="card empty"><h3>' + esc(title) + '</h3><p>' + esc(body) + '</p>' +
+      '<div class="actions"><button class="btn" type="button" data-go="rfp">Go to RFP</button>' +
+      '<button class="btn primary js-sample-build" type="button">Run it on the sample RFP</button></div></div>';
+  }
+
+  // ---------- tabs ----------
+  function setTab(id, focus) {
+    if (!TAB_IDS.includes(id)) id = 'matrix';
+    state.tab = id;
+    $$('.tab').forEach((b) => {
+      const on = b.dataset.tab === id;
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;
+      if (on && focus) b.focus();
+    });
+    TAB_IDS.forEach((t) => { $('#panel-' + t).hidden = t !== id; });
+    $('#tab-select').value = id;
+    if (id === 'rfp') syncRfpForm();
+    if (id === 'matrix') renderMatrix();
+    if (id === 'check') renderCheckPanel();
+    if (id === 'plan') renderPlan();
+    if (id === 'value') renderValue();
+    try { history.replaceState(null, '', '#' + id); } catch (e) { /* not needed inside the viewer */ }
+    window.scrollTo(0, 0);
+  }
+
+  function updateBadges() {
+    const bm = $('#badge-matrix');
+    bm.hidden = !state.reqs.length;
+    bm.textContent = state.reqs.length;
+    const bc = $('#badge-check');
+    bc.hidden = !state.check;
+    if (state.check) bc.textContent = Math.round(state.check.recall * 100) + '%';
+  }
+
+  // ---------- 1. RFP ----------
+  function syncRfpForm() {
+    $('#f-company').value = state.company;
+    $('#f-agency').value = state.agency;
+    $('#f-title').value = state.title;
+    $('#f-due').value = state.due;
+    $('#f-rfp').value = state.rfpText;
+    $('#f-advisory').checked = state.includeAdvisory;
+    updateRfpCount();
+  }
+
+  function updateRfpCount() {
+    const text = state.rfpText.trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    const lines = text ? text.split('\n').length : 0;
+    const isSample = text && state.rfpText === SAMPLE_RFP;
+    $('#sample-tag').hidden = !isSample;
+    $('#rfp-count').textContent = words ? num(words) + ' words, ' + num(lines) + ' lines' : 'No text yet';
+    $('#btn-build').disabled = !text;
+  }
+
+  function loadSample() {
+    state.rfpText = SAMPLE_RFP;
+    state.agency = SAMPLE_META.agency;
+    state.title = SAMPLE_META.title;
+    state.due = SAMPLE_META.due;
+    syncRfpForm();
+  }
+
+  function runBuild(bannerKind) {
+    const t0 = performance.now();
+    state.reqs = L.extractRequirements(state.rfpText, state.includeAdvisory);
+    state.builtMs = Math.max(1, Math.round(performance.now() - t0));
+    state.builtWithAdvisory = state.includeAdvisory;
+    state.banner = bannerKind;
+    state.filters = { ...EMPTY_FILTERS };
+    $('#flt-q').value = '';
+    state.check = null;
+  }
+
+  function build() {
+    runBuild('built');
+    updateBadges();
+    setTab('matrix');
+  }
+
+  // ---------- 2. Matrix ----------
+  function filteredReqs() {
+    const f = state.filters;
+    const q = f.q.trim().toLowerCase();
+    return state.reqs.filter((r) =>
+      (!q || (r.text + ' ' + r.id + ' ' + r.section + ' ' + r.heading + ' ' + r.owner).toLowerCase().includes(q)) &&
+      (!f.type || r.type === f.type) &&
+      (!f.volume || r.volume === f.volume) &&
+      (!f.status || r.status === f.status) &&
+      (!f.tag || r.tags.includes(f.tag)));
+  }
+
+  function options(list, selected, anyLabel) {
+    return '<option value="">' + esc(anyLabel) + '</option>' +
+      list.map((v) => '<option value="' + esc(v) + '"' + (v === selected ? ' selected' : '') + '>' + esc(v) + '</option>').join('');
+  }
+
+  function renderBanner() {
+    const n = state.reqs.length;
+    const has = n > 0;
+    const dismiss = '<button class="x" type="button" data-dismiss="banner">Dismiss</button>';
+    let html = '';
+    if (state.banner === 'sample' && has) {
+      html = '<div class="banner info">' + icons.info + '<span>This matrix was built from a <b>fictional sample RFP</b>, so you can see the tool working. Paste your own on the <a href="#rfp" data-go="rfp">RFP tab</a>.</span>' + dismiss + '</div>';
+    } else if (state.banner === 'built' && has) {
+      html = '<div class="banner">' + icons.check + '<span>Found <b>' + plural(n, 'requirement', 'requirements') + '</b> in ' + state.builtMs + ' ms' +
+        (state.builtWithAdvisory ? ', advisory language included.' : '.') + ' Assign owners and status below, then export.</span>' + dismiss + '</div>';
+    } else if (state.banner === 'built' && !has && state.rfpText.trim()) {
+      html = '<div class="banner warn">' + icons.alert + '<span>No requirements found. Check that the text includes requirement language such as shall or must, and section headings like C.2 or SECTION L.</span>' + dismiss + '</div>';
+    }
+    $('#matrix-banner').innerHTML = html;
+  }
+
+  function renderMatrix() {
+    const has = state.reqs.length > 0;
+    $('#matrix-meta').textContent = has ? rfpMeta() : '';
+    $('#matrix-actions').hidden = !has;
+    $('#matrix-body').hidden = !has;
+    $('#matrix-empty').innerHTML = has ? '' : emptyState('No requirements yet', 'Go to RFP and paste one, or run it on the sample.');
+    renderBanner();
+    if (!has) return;
+
+    const n = state.reqs.length;
+    const count = (fn) => state.reqs.filter(fn).length;
+    const f = state.filters;
+    const noFilter = !f.type && !f.volume && !f.status && !f.tag && !f.q;
+    const stats = [
+      { l: 'Requirements', v: n, key: 'all', on: noFilter },
+      { l: 'Work requirements', v: count((r) => r.type === 'Work requirement'), key: 'type:Work requirement', on: f.type === 'Work requirement' && !f.tag },
+      { l: 'Instructions', v: count((r) => r.type === 'Instruction'), key: 'type:Instruction', on: f.type === 'Instruction' && !f.tag },
+      { l: 'Evaluation criteria', v: count((r) => r.type === 'Evaluation'), key: 'type:Evaluation', on: f.type === 'Evaluation' && !f.tag },
+      { l: 'Format rules', v: count((r) => r.tags.includes('Format')), key: 'tag:Format', on: f.tag === 'Format' },
+      { l: 'Deadlines', v: count((r) => r.tags.includes('Deadline')), key: 'tag:Deadline', on: f.tag === 'Deadline' },
+    ];
+    $('#matrix-stats').innerHTML = stats.map((s) =>
+      '<button type="button" class="stat' + (s.on ? ' on' : '') + '" data-stat="' + esc(s.key) + '" aria-pressed="' + (s.on ? 'true' : 'false') + '"><div class="v">' + s.v + '</div><div class="l">' + esc(s.l) + '</div></button>').join('');
+
+    $('#flt-type').innerHTML = options(TYPES, f.type, 'Any type');
+    $('#flt-volume').innerHTML = options(L.VOLUMES, f.volume, 'Any volume');
+    $('#flt-status').innerHTML = options(STATUSES, f.status, 'Any status');
+    renderRows();
+  }
+
+  function renderRows() {
+    const rows = filteredReqs();
+    $('#flt-showing').textContent = 'Showing ' + rows.length + ' of ' + state.reqs.length + (state.filters.tag ? ', tag: ' + state.filters.tag : '');
+    if (!rows.length) {
+      $('#matrix-rows').innerHTML = '<tr><td colspan="8" class="muted" style="text-align:center;padding:28px">No requirements match these filters.</td></tr>';
+      return;
+    }
+    $('#matrix-rows').innerHTML = rows.map((r) => {
+      const tags = r.tags.length ? r.tags.map((t) => '<span class="chip ' + TAG_CLASS[t] + '">' + esc(t) + '</span>').join('') : '<span class="muted">None</span>';
+      const head = (r.section ? r.section + ' ' : '') + (r.heading || 'No heading');
+      return '<tr data-id="' + r.id + '">' +
+        '<td class="mono"><button type="button" class="idbtn" aria-expanded="false" title="Show section heading">' + r.id + '</button></td>' +
+        '<td class="mono">' + esc(r.section || 'None') + '</td>' +
+        '<td class="req">' + highlight(r.text, r.trigger) + '<div class="heading-note" hidden>' + esc(head) + '</div></td>' +
+        '<td><span class="chip ' + TYPE_CLASS[r.type] + '">' + esc(r.type) + '</span></td>' +
+        '<td>' + tags + '</td>' +
+        '<td class="vol"><select class="sel-volume" id="vol-' + r.id + '" aria-label="Volume for ' + r.id + '">' + L.VOLUMES.map((v) => '<option' + (v === r.volume ? ' selected' : '') + '>' + esc(v) + '</option>').join('') + '</select></td>' +
+        '<td class="owner"><input class="inp-owner" id="owner-' + r.id + '" value="' + esc(r.owner) + '" placeholder="Add owner" aria-label="Owner for ' + r.id + '"></td>' +
+        '<td class="status"><select class="sel-status" id="status-' + r.id + '" aria-label="Status for ' + r.id + '">' + STATUSES.map((s) => '<option' + (s === r.status ? ' selected' : '') + '>' + esc(s) + '</option>').join('') + '</select></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  const reqById = (id) => state.reqs.find((r) => r.id === id);
+
+  function tsv() {
+    const clean = (v) => String(v).replace(/[\t\n\r]+/g, ' ');
+    const head = ['ID', 'Section', 'Requirement', 'Type', 'Tags', 'Volume', 'Owner', 'Status'];
+    return [head, ...state.reqs.map((r) => [r.id, r.section, r.text, r.type, r.tags.join('; '), r.volume, r.owner, r.status])]
+      .map((row) => row.map(clean).join('\t')).join('\n');
+  }
+
+  async function exportCsv() {
+    const csv = '﻿' + L.toCsv(state.reqs);
+    const filename = 'compliance-matrix-' + slug(state.title) + '.csv';
+    const rowsLabel = plural(state.reqs.length, 'row', 'rows');
+    if (!inViewer) { browserDownload(filename, csv, 'text/csv;charset=utf-8'); toast('CSV exported, ' + rowsLabel); return; }
+    const downloads = await downloadsReady;
+    if (!downloads) {
+      $('#btn-csv').hidden = true;
+      toast("Saving files isn't available in this view. Use Copy table instead.");
+      return;
+    }
+    try {
+      await downloads.save({ filename, data: csv });
+      toast('CSV saved, ' + rowsLabel);
+    } catch (err) {
+      const code = err && err.code;
+      if (code === 'declined') toast('Save cancelled');
+      else if (code === 'rate_limited') toast('A save prompt is already open');
+      else {
+        if (['unavailable', 'not_granted', 'capability_disabled', 'capability_removed'].includes(code)) $('#btn-csv').hidden = true;
+        toast("Saving files isn't available in this view. Use Copy table instead.");
+      }
+    }
+  }
+
+  // ---------- 3. Check ----------
+  function renderCheckPanel() {
+    const has = state.reqs.length > 0;
+    $('#check-empty').innerHTML = has ? '' : emptyState('Build the compliance matrix first', 'The check compares your matrix with the one the tool builds from the RFP.');
+    $('#check-body').hidden = !has;
+    if (!has) return;
+    $('#f-hand').value = state.handText;
+    $('#btn-check').disabled = !state.handText.trim();
+    renderCheckResult();
+  }
+
+  function renderCheckResult() {
+    const c = state.check;
+    const box = $('#check-result');
+    if (!c) { box.innerHTML = '<div class="result-empty">Paste your matrix, or load the sample, then press Check.</div>'; return; }
+    const pct = Math.round(c.recall * 100);
+    const pass = c.recall >= 0.95;
+    const list = (title, items, cls, render, emptyText) =>
+      '<div class="rlist' + (cls ? ' ' + cls : '') + '"><h4>' + esc(title) + ' (' + items.length + ')</h4>' +
+      (items.length ? '<ul>' + items.map(render).join('') + '</ul>' : '<div class="none">' + esc(emptyText) + '</div>') + '</div>';
+    box.innerHTML =
+      '<div class="big">Caught ' + c.caught + ' of ' + c.total + ' <span class="pct">(' + pct + '%)</span></div>' +
+      '<div style="margin-top:10px"><span class="badge ' + (pass ? 'good' : 'warn') + '">' + (pass ? icons.check + 'Meets the 95% bar' : icons.alert + 'Below the 95% bar') + '</span></div>' +
+      '<div class="meter" aria-hidden="true"><i class="' + (pass ? '' : 'warn') + '" style="width:' + Math.min(100, pct) + '%"></i><span class="tick" style="left:95%"></span></div>' +
+      '<div class="meter-legend"><span>0%</span><span>Pilot bar: 95%</span></div>' +
+      '<div class="rlists">' +
+      list('Missed by the tool', c.missed, 'warn', (m) => '<li><span>' + esc(m.line) + '</span><span class="meta">closest match ' + Math.round(m.score * 100) + '%</span></li>', 'Nothing missed.') +
+      list('Found by the tool, not in your matrix', c.extras, '', (r) => '<li><span><span class="idchip">' + r.id + '</span> ' + esc(r.text) + '</span></li>', 'None. Everything the tool found is in your matrix.') +
+      '<details class="rlist"><summary>Caught (' + c.caught + ')</summary><ul>' +
+      c.results.filter((r) => r.matchId).map((r) => '<li><span>' + esc(r.line) + '</span><span class="meta">matched ' + r.matchId + '</span></li>').join('') +
+      '</ul></details></div>';
+  }
+
+  // ---------- 4. Plan ----------
+  function renderPlan() {
+    const has = state.reqs.length > 0;
+    $('#plan-empty').innerHTML = has ? '' : emptyState('No plan yet', 'Build the compliance matrix first, then each volume shows what it has to answer.');
+    $('#plan-body').hidden = !has;
+    $('#plan-meta').textContent = has ? rfpMeta() : '';
+    if (!has) return;
+    const company = state.company.trim() || '[Company]';
+    const rfpLower = state.rfpText.toLowerCase();
+    $('#plan-cards').innerHTML = L.VOLUMES.map((v) => {
+      const items = state.reqs.filter((r) => r.volume === v);
+      if (!items.length) return '';
+      const done = items.filter((r) => r.status === 'Done').length;
+      const pct = Math.round((done / items.length) * 100);
+      let library = '';
+      if (v === 'Vol II Past Performance') {
+        const ranked = LIBRARY.map((e) => ({ ...e, hits: e.tags.filter((t) => rfpLower.includes(t.toLowerCase())) }))
+          .sort((a, b) => b.hits.length - a.hits.length);
+        library = '<div class="library"><h4>From your past performance library <span class="muted" style="font-weight:500">(sample, fictional)</span></h4>' +
+          ranked.map((e) => '<div class="lib-item"><div class="t">' + esc(e.title) + '</div><div class="d">' + esc(e.body) + '</div><div class="m">' + esc(e.meta) + '</div>' +
+            '<div class="hit">' + (e.hits.length ? 'Matches: ' + esc(e.hits.join(', ')) + ' (' + e.hits.length + ')' : 'No matches in this RFP') + '</div></div>').join('') + '</div>';
+      }
+      return '<div class="card vol"><div class="vol-head"><h3>' + esc(v) + '</h3><span class="muted small">' + plural(items.length, 'requirement', 'requirements') + ', ' + done + ' done</span></div>' +
+        '<div class="bar" role="progressbar" aria-label="' + esc(v) + ' progress" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct + '%"></i></div>' +
+        '<ul class="starters">' + items.map((r) =>
+          '<li><span class="idchip">' + r.id + '</span><div><span class="starter-lbl">Compliance starter</span><p>' + esc(L.starterSentence(r, company)) + '</p></div>' +
+          '<select class="sel-status" id="plan-status-' + r.id + '" data-id="' + r.id + '" aria-label="Status for ' + r.id + '">' + STATUSES.map((s) => '<option' + (s === r.status ? ' selected' : '') + '>' + esc(s) + '</option>').join('') + '</select></li>').join('') +
+        '</ul>' + library + '</div>';
+    }).join('');
+  }
+
+  // ---------- 5. Value ----------
+  const V_FIELDS = { bids: 'v-bids', hours: 'v-hours', share: 'v-share', removed: 'v-removed', cost: 'v-cost', passed: 'v-passed', win: 'v-win', award: 'v-award', margin: 'v-margin' };
+
+  function syncValueForm() {
+    Object.entries(V_FIELDS).forEach(([k, id]) => { $('#' + id).value = state.inputs[k]; });
+  }
+
+  function valueInputs() {
+    const i = state.inputs;
+    return {
+      bidsPerMonth: i.bids, hoursPerBid: i.hours, draftingShare: i.share / 100, hoursRemovedPerBid: i.removed, hourlyCost: i.cost,
+      passedLastQuarter: i.passed, winRate: i.win / 100, avgAward: i.award, margin: i.margin / 100,
+    };
+  }
+
+  function renderValue() {
+    const i = state.inputs;
+    const r = L.computeValue(valueInputs());
+    let hint = 'Ajaia says its draft is typically 70% finished: ' + num(r.draftingHours, 1) + ' drafting hours x 70% = ' + num(r.pageClaimCeiling, 1) + ' hours. The default of 15 stays below that, to be conservative.';
+    let warn = false;
+    if (i.removed > r.draftingHours) { hint = 'Capped at ' + num(r.draftingHours, 1) + ' hours, the drafting time in a bid.'; warn = true; }
+    else if (i.removed > r.pageClaimCeiling) { hint = "That's more than Ajaia's own claim supports (" + num(r.pageClaimCeiling, 1) + ' hours).'; warn = true; }
+    const h = $('#v-removed-hint');
+    h.textContent = hint;
+    h.classList.toggle('warn', warn);
+
+    const plan = r.plan;
+    const planLine = plan.price === null
+      ? '<b>Custom</b>, priced with you <span class="muted">(more than 12 RFPs a month)</span>'
+      : '<b>' + plan.name + '</b>, ' + money(plan.price) + ' a month <span class="muted">(up to ' + plan.cap + ' RFPs)</span>';
+    let keepLine;
+    if (plan.price !== null && r.valuePerMonth > 0) {
+      keepLine = r.buyerKeeps >= 0
+        ? 'You keep <b>' + money(r.buyerKeeps) + '</b> of every <b>' + money(r.valuePerMonth) + '</b>. The price is <b>' + Math.round(r.priceShare * 100) + '%</b> of the hours value.'
+        : 'At these numbers the price is more than the hours value, by <b>' + money(-r.buyerKeeps) + '</b> a month.';
+    } else if (plan.price !== null) {
+      keepLine = 'Add your bids and hours to see what you keep.';
+    } else {
+      keepLine = 'At this volume the price is set with you, from the same hours value.';
+    }
+    const pilotPrice = plan.price !== null ? plan.price * L.PILOT.discount : null;
+    const pilotText = plan.price === null
+      ? 'For more than 12 RFPs a month, pilot terms are set with you.'
+      : L.PILOT.days + ' days at ' + money(pilotPrice) + ' a month (50% off), starting on your first live bid. If drafting hours don\'t drop by at least 25%, the second month\'s on us. On day ' + (L.PILOT.days + 1) + ' it moves to ' + money(plan.price) + ' a month unless you cancel. Founding firms keep ' + money(plan.price) + ' for 24 months.';
+
+    $('#value-results').innerHTML =
+      '<div class="kpis">' +
+        '<div class="card kpi"><div class="l">Writer hours saved a month</div><div class="v">' + num(r.hoursSavedPerMonth, 1) + '</div><div class="s">' + num(i.bids) + ' bids x ' + num(r.hoursRemoved, 1) + ' hours</div></div>' +
+        '<div class="card kpi accent"><div class="l">Worth a month</div><div class="v">' + money(r.valuePerMonth) + '</div><div class="s">' + num(r.hoursSavedPerMonth, 1) + ' hours x ' + money(i.cost) + '</div></div>' +
+      '</div>' +
+      '<div class="card plan"><div class="l">Your plan</div><div class="plan-line">' + planLine + '</div><p>' + keepLine + '</p></div>' +
+      '<div class="grid2">' +
+        '<div class="card mini"><div class="l">Upside, not in the price</div><p>Extra bids you could take on: <b>' + num(r.extraBidsPerMonth, 1) + '</b> a month. Expected profit per extra bid: <b>' + money(r.profitPerBid) + '</b> (award x win rate x margin). Upside: <b>' + money(r.upsidePerMonth) + '</b> a month.</p></div>' +
+        '<div class="card mini"><div class="l">The bids you passed on</div><p>Expected profit on the RFPs you passed on last quarter: <b>' + money(r.noBidCostLastQuarter) + '</b>.</p></div>' +
+      '</div>' +
+      '<div class="card pilot"><h3>Proposed pilot</h3><p>' + esc(pilotText) + '</p>' +
+        '<div class="actions"><span class="muted small">Proposed pricing from the go-to-market plan. Not a published Ajaia price.</span><span class="spacer"></span><button class="btn primary" type="button" id="btn-copy-summary">Copy pilot summary</button></div></div>';
+  }
+
+  function pilotSummary() {
+    const i = state.inputs;
+    const r = L.computeValue(valueInputs());
+    const who = state.company.trim() || 'your firm';
+    const plan = r.plan;
+    let s = 'Pilot summary for ' + who + ': ' + num(i.bids) + ' bids a month, about ' + num(r.hoursSavedPerMonth, 1) + ' writer hours saved a month, worth about ' + money(r.valuePerMonth) + '. ';
+    if (plan.price === null) return s + 'At more than 12 RFPs a month, price and pilot terms are set together.';
+    s += plan.name + ' plan at ' + money(plan.price) + ' a month, so you keep about ' + money(Math.max(0, r.buyerKeeps)) + '. ';
+    s += 'Pilot: ' + L.PILOT.days + ' days at ' + money(plan.price * L.PILOT.discount) + ' a month, starting on your first live bid. If drafting hours don\'t drop by at least 25%, the second month\'s on us.';
+    return s;
+  }
+
+  // ---------- events ----------
+  function bind() {
+    $$('.tab').forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab)));
+    $('.tabs').addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const idx = TAB_IDS.indexOf(state.tab);
+      const next = TAB_IDS[(idx + (e.key === 'ArrowRight' ? 1 : TAB_IDS.length - 1)) % TAB_IDS.length];
+      setTab(next, true);
+      e.preventDefault();
+    });
+    $('#tab-select').addEventListener('change', (e) => setTab(e.target.value));
+
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.js-sample-build')) { loadSample(); build(); return; }
+      const go = e.target.closest('[data-go]');
+      if (go) { e.preventDefault(); setTab(go.dataset.go); return; }
+      if (e.target.closest('[data-dismiss="banner"]')) { state.banner = null; renderBanner(); return; }
+      if (e.target.closest('#btn-copy-summary')) copyText(pilotSummary(), 'Pilot summary copied');
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#copy-sheet').hidden) closeCopySheet(); });
+    $('#copy-sheet-close').addEventListener('click', closeCopySheet);
+    $('#copy-sheet').addEventListener('click', (e) => { if (e.target.id === 'copy-sheet') closeCopySheet(); });
+
+    // 1. RFP
+    const fieldMap = { 'f-company': 'company', 'f-agency': 'agency', 'f-title': 'title', 'f-due': 'due' };
+    Object.entries(fieldMap).forEach(([id, key]) => $('#' + id).addEventListener('input', (e) => { state[key] = e.target.value; }));
+    $('#f-rfp').addEventListener('input', (e) => { state.rfpText = e.target.value; updateRfpCount(); });
+    $('#f-advisory').addEventListener('change', (e) => { state.includeAdvisory = e.target.checked; });
+    $('#btn-sample').addEventListener('click', () => { loadSample(); toast('Sample RFP loaded'); });
+    $('#btn-clear').addEventListener('click', () => {
+      Object.assign(state, { agency: '', title: '', due: '', rfpText: '' });
+      syncRfpForm();
+      $('#f-rfp').focus();
+    });
+    $('#btn-build').addEventListener('click', build);
+
+    // 2. Matrix
+    $('#matrix-stats').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-stat]');
+      if (!b) return;
+      const key = b.dataset.stat;
+      if (key === 'all') { state.filters = { ...EMPTY_FILTERS }; $('#flt-q').value = ''; }
+      else {
+        state.filters = { ...EMPTY_FILTERS, q: state.filters.q };
+        if (key.startsWith('type:')) state.filters.type = key.slice(5);
+        if (key.startsWith('tag:')) state.filters.tag = key.slice(4);
+      }
+      renderMatrix();
+    });
+    $('#flt-q').addEventListener('input', (e) => { state.filters.q = e.target.value; renderMatrix(); });
+    $('#flt-type').addEventListener('change', (e) => { state.filters.type = e.target.value; renderMatrix(); });
+    $('#flt-volume').addEventListener('change', (e) => { state.filters.volume = e.target.value; renderMatrix(); });
+    $('#flt-status').addEventListener('change', (e) => { state.filters.status = e.target.value; renderMatrix(); });
+    $('#flt-clear').addEventListener('click', () => { state.filters = { ...EMPTY_FILTERS }; $('#flt-q').value = ''; renderMatrix(); });
+    const rows = $('#matrix-rows');
+    rows.addEventListener('click', (e) => {
+      const b = e.target.closest('.idbtn');
+      if (!b) return;
+      const note = b.closest('tr').querySelector('.heading-note');
+      note.hidden = !note.hidden;
+      b.setAttribute('aria-expanded', note.hidden ? 'false' : 'true');
+    });
+    rows.addEventListener('change', (e) => {
+      const tr = e.target.closest('tr[data-id]');
+      if (!tr) return;
+      const r = reqById(tr.dataset.id);
+      if (e.target.classList.contains('sel-volume')) r.volume = e.target.value;
+      if (e.target.classList.contains('sel-status')) r.status = e.target.value;
+      if (state.filters.volume || state.filters.status) renderRows();
+    });
+    rows.addEventListener('input', (e) => {
+      if (!e.target.classList.contains('inp-owner')) return;
+      reqById(e.target.closest('tr').dataset.id).owner = e.target.value;
+    });
+    $('#btn-csv').addEventListener('click', exportCsv);
+    $('#btn-copy-table').addEventListener('click', () => copyText(tsv(), 'Copied. Paste it into Excel or Sheets.'));
+
+    // 3. Check
+    $('#f-hand').addEventListener('input', (e) => { state.handText = e.target.value; $('#btn-check').disabled = !state.handText.trim(); });
+    $('#btn-hand-sample').addEventListener('click', () => {
+      state.handText = SAMPLE_HAND;
+      $('#f-hand').value = SAMPLE_HAND;
+      $('#btn-check').disabled = false;
+      toast('Sample hand matrix loaded');
+    });
+    $('#btn-check').addEventListener('click', () => {
+      state.check = L.checkAgainstMatrix(state.handText, state.reqs);
+      updateBadges();
+      renderCheckResult();
+    });
+
+    // 4. Plan
+    $('#plan-cards').addEventListener('change', (e) => {
+      if (!e.target.classList.contains('sel-status')) return;
+      reqById(e.target.dataset.id).status = e.target.value;
+      renderPlan();
+    });
+
+    // 5. Value
+    Object.entries(V_FIELDS).forEach(([k, id]) => {
+      $('#' + id).addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        state.inputs[k] = isFinite(v) && v >= 0 ? v : 0;
+        renderValue();
+      });
+    });
+  }
+
+  // ---------- start: open in a working state, with the fictional sample built and checked ----------
+  bind();
+  loadSample();
+  runBuild('sample');
+  state.handText = SAMPLE_HAND;
+  state.check = L.checkAgainstMatrix(state.handText, state.reqs);
+  syncValueForm();
+  updateBadges();
+  const fromHash = (location.hash || '').replace('#', '');
+  setTab(TAB_IDS.includes(fromHash) ? fromHash : 'matrix');
+  downloadsReady.then((ns) => { if (inViewer && !ns) $('#btn-csv').hidden = true; });
+  window.__bidcheck = { state, build, loadSample, setTab };
+})();
+</script>
+</body>
+</html>
